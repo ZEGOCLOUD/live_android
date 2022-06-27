@@ -7,15 +7,15 @@ import com.google.gson.annotations.SerializedName;
  */
 public class ZegoRoomInfo {
     // room ID
-    @SerializedName("id")
+    @SerializedName("RoomId")
     private String roomID;
 
     // room name
-    @SerializedName("name")
+    @SerializedName("RoomName")
     private String roomName;
 
     // host user ID
-    @SerializedName("host_id")
+    @SerializedName("HostId")
     private String hostID;
 
     public String getRoomID() {
@@ -45,9 +45,9 @@ public class ZegoRoomInfo {
     @Override
     public String toString() {
         return "ZegoRoomInfo{" +
-                "roomID='" + roomID + '\'' +
-                ", roomName='" + roomName + '\'' +
-                ", hostID='" + hostID + '\'' +
+                "RoomId='" + roomID + '\'' +
+                ", RoomName='" + roomName + '\'' +
+                ", HostID='" + hostID + '\'' +
                 '}';
     }
 }

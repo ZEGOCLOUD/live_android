@@ -93,17 +93,11 @@ public class UserLoginActivity extends BaseActivity<ActivityUserLoginBinding> {
                 user.setUserName(userName);
                 ZegoTokenManager.getInstance().getToken(userID, (errorCode1, token) -> {
                     if (!TextUtils.isEmpty(token)) {
-                        NetworkUtils.isAvailableByPingAsync(isAvailable -> {
-                            if (isAvailable) {
-                                ZegoRoomManager.getInstance().userService.login(user, token, errorCode -> {
-                                    if (errorCode == ZegoRoomErrorCode.SUCCESS) {
-                                        RoomListActivity.start(this);
-                                    } else {
-                                        ToastHelper.showWarnToast(StringUtils.getString(R.string.toast_login_fail, errorCode));
-                                    }
-                                });
+                        ZegoRoomManager.getInstance().userService.login(user, token, errorCode -> {
+                            if (errorCode == ZegoRoomErrorCode.SUCCESS) {
+                                RoomListActivity.start(this);
                             } else {
-                                ToastHelper.showWarnToast(StringUtils.getString(R.string.network_connect_failed_title));
+                                ToastHelper.showWarnToast(StringUtils.getString(R.string.toast_login_fail, errorCode));
                             }
                         });
                     }

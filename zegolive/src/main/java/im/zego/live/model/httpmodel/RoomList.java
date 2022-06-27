@@ -5,13 +5,17 @@ import java.util.List;
 
 public class RoomList {
 
-    @SerializedName("room_list")
+    @SerializedName("TotalCount")
+    public int totalCount;
+
+    @SerializedName("RoomList")
     public List<RoomBean> roomList;
 
     @Override
     public String toString() {
         return "RoomList{" +
-            "roomList=" + roomList +
+            "roomList=" + roomList + ","+
+            "totalCount=" + totalCount +
             '}';
     }
 }

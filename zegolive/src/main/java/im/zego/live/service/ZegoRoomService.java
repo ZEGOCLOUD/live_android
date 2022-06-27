@@ -67,22 +67,21 @@ public class ZegoRoomService {
      * Call this method at: After user logs in
      *
      * @param roomID   refers to the room ID, the unique identifier of the room. This is required to join a room and cannot be null.
-     * @param roomName refers to the room name. This is used for display in the room and cannot be null.
      * @param token    refers to the authentication token. To get this, see the documentation: https://docs.zegocloud.com/article/11648
      * @param callback refers to the callback for create a room.
      */
-    public void createRoom(String roomID, String roomName, final String token,
+    public void createRoom(String roomID, final String token,
                            final ZegoRoomCallback callback) {
         ZegoUserInfo localUserInfo = ZegoRoomManager.getInstance().userService.localUserInfo;
         localUserInfo.setRole(ZegoRoomUserRole.Host);
 
         roomInfo.setRoomID(roomID);
-        roomInfo.setRoomName(roomName);
+        roomInfo.setRoomName(roomID);
         roomInfo.setHostID(localUserInfo.getUserID());
 
         ZIMRoomInfo zimRoomInfo = new ZIMRoomInfo();
         zimRoomInfo.roomID = roomID;
-        zimRoomInfo.roomName = roomName;
+        zimRoomInfo.roomName = roomID;
 
         HashMap<String, String> roomAttributes = new HashMap<>();
         roomAttributes.put(ZegoRoomConstants.KEY_ROOM_INFO, ZegoRoomAttributesHelper.gson.toJson(roomInfo));
@@ -114,7 +113,9 @@ public class ZegoRoomService {
         ZegoUserInfo localUserInfo = ZegoRoomManager.getInstance().userService.localUserInfo;
         localUserInfo.setRole(ZegoRoomUserRole.Participant);
 
-        ZegoZIMManager.getInstance().zim.joinRoom(roomID, (roomInfo, errorInfo) -> {
+        ZIMRoomInfo room = new ZIMRoomInfo();
+        room.roomID = roomID;
+        ZegoZIMManager.getInstance().zim.enterRoom(room, null, (roomInfo, errorInfo) -> {
             if (errorInfo.code == ZIMErrorCode.SUCCESS) {
                 loginRTCRoom(roomID, token, localUserInfo);
                 this.roomInfo.setRoomID(roomInfo.baseInfo.roomID);
@@ -229,9 +230,6 @@ public class ZegoRoomService {
                             if (listener != null) {
                                 listener.onReceiveRoomInfoUpdate(null);
                             }
-                        } else {
-                            String userID = ZegoRoomManager.getInstance().userService.localUserInfo.getUserID();
-                            ZegoRoomListService.heartBeat(userID, roomID1, false, null);
                         }
                     });
             }

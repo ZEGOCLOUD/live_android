@@ -4,31 +4,14 @@ import com.google.gson.annotations.SerializedName;
 
 public class RoomBean {
 
-    @SerializedName("id")
+    @SerializedName("RoomId")
     private String roomID;
-    @SerializedName("name")
-    private String name;
-    @SerializedName("host_id")
-    private String hostID;
-    @SerializedName("create_time")
-    private Long createTime;
-    @SerializedName("user_num")
+
+    @SerializedName("UserCount")
     private Integer userNum;
 
     public String getRoomID() {
         return roomID;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getHostID() {
-        return hostID;
-    }
-
-    public Long getCreateTime() {
-        return createTime;
     }
 
     public Integer getUserNum() {
@@ -39,9 +22,6 @@ public class RoomBean {
     public String toString() {
         return "RoomListBean{" +
             "id='" + roomID + '\'' +
-            ", name='" + name + '\'' +
-            ", hostId='" + hostID + '\'' +
-            ", createTime=" + createTime +
             ", userNum=" + userNum +
             '}';
     }

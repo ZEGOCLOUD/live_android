@@ -62,7 +62,6 @@ public class LiveRoomViewModel extends ViewModel {
     public MutableLiveData<OperationAction> operationAction = new MutableLiveData<>();
 
     private final List<ZegoTextMessage> joinLeaveMessages = new ArrayList<>();
-    private Timer timer = new Timer();
 
     public void init(ILiveRoomViewModelListener listener) {
         ZegoRoomManager.getInstance().roomService.setListener(new ZegoRoomServiceListener() {
@@ -209,88 +208,36 @@ public class LiveRoomViewModel extends ViewModel {
         deviceService.useFrontCamera(enable);
     }
 
-    public void createRoom(String roomName, ZegoRoomCallback callback) {
+    public void createRoom(String roomID, ZegoRoomCallback callback) {
         ZegoUserInfo localUserInfo = ZegoRoomManager.getInstance().userService.localUserInfo;
         String userID = localUserInfo.getUserID();
-        ZegoRoomListService.createRoom(roomName, userID, new IAsyncGetCallback<RoomBean>() {
-            @Override
-            public void onResponse(int errorCode, @NonNull String message, RoomBean responseJsonBean) {
-                if (errorCode == ZegoRoomErrorCode.SUCCESS) {
-                    String roomID = responseJsonBean.getRoomID();
-                    ZegoTokenManager.getInstance().getToken(userID, (errorCode1, token) -> {
-                        ZegoRoomManager.getInstance().roomService.createRoom(roomID, roomName, token, errorCode2 -> {
-                            Log.d("Room", "createRoom: " + errorCode2 + ",roomID:" + roomID);
-                            if (errorCode2 == ZegoRoomErrorCode.SUCCESS) {
-                                takeSeat(callback);
-                                return;
-                            }
-                            if (callback != null) {
-                                callback.onRoomCallback(errorCode);
-                            }
-                        });
-                    });
-                    ZegoRoomListService.joinServerRoom(userID, roomID, new IAsyncGetCallback<RoomBean>() {
-                        @Override
-                        public void onResponse(int errorCode, @NonNull String message, RoomBean responseJsonBean) {
-                            TimerTask task = new TimerTask() {
-                                @Override
-                                public void run() {
-                                    ZegoRoomListService.heartBeat(userID, roomID, true, null);
-                                }
-                            };
-                            timer.schedule(task, 0, HEART_BEAT_PERIOD);
-                        }
-                    });
-                } else {
-                    if (callback != null) {
-                        callback.onRoomCallback(errorCode);
-                    }
+        ZegoTokenManager.getInstance().getToken(userID, (errorCode1, token) -> {
+            ZegoRoomManager.getInstance().roomService.createRoom(roomID, token, errorCode2 -> {
+                Log.d("Room", "createRoom: " + errorCode2 + ",roomID:" + roomID);
+                if (errorCode2 == ZegoRoomErrorCode.SUCCESS) {
+                    takeSeat(callback);
+                    return;
                 }
-            }
+                if (callback != null) {
+                    callback.onRoomCallback(errorCode2);
+                }
+            });
         });
     }
 
     public void joinRoom(String roomID, ZegoRoomCallback callback) {
         final ZegoUserService userService = ZegoRoomManager.getInstance().userService;
         String userID = userService.localUserInfo.getUserID();
-        ZegoTokenManager.getInstance().getToken(userID, (errorCode1, token) -> {
-            ZegoRoomListService.joinServerRoom(userID, roomID, new IAsyncGetCallback<RoomBean>() {
-                @Override
-                public void onResponse(int errorCode, @NonNull String message, RoomBean responseJsonBean) {
-                    if (errorCode == ZegoRoomErrorCode.SUCCESS) {
-                        if (!TextUtils.isEmpty(token)) {
-                            ZegoRoomManager.getInstance().roomService.joinRoom(roomID, token, errorCode1 -> {
-                                Log.d("Room", "joinRoom: " + errorCode1 + ",roomID:" + roomID);
-                                if (errorCode1 == ZegoRoomErrorCode.SUCCESS) {
-                                    userService.getOnlineRoomUsers("", (errorCode2, userList1, nextFlag) -> {
-                                        updateUserList();
-                                    });
-                                }
-                                int tempErrorCode = errorCode;
-                                if (errorCode1 == ZIMErrorCode.ROOM_DOES_NOT_EXIST.value()) {
-                                    tempErrorCode = ZegoRoomErrorCode.ROOM_NOT_FOUND;
-                                }
-                                if (callback != null) {
-                                    callback.onRoomCallback(tempErrorCode);
-                                }
-                            });
-                        }
-                        TimerTask task = new TimerTask() {
-                            @Override
-                            public void run() {
-                                ZegoRoomListService.heartBeat(userID, roomID, false, null);
-                            }
-                        };
-                        timer.schedule(task, 0, HEART_BEAT_PERIOD);
-                    } else {
-                        int tempErrorCode = errorCode;
-                        if (errorCode == ZegoRoomListService.ROOM_NOT_EXISTED) {
-                            tempErrorCode = ZegoRoomErrorCode.ROOM_NOT_FOUND;
-                        }
-                        if (callback != null) {
-                            callback.onRoomCallback(tempErrorCode);
-                        }
-                    }
+        ZegoTokenManager.getInstance().getToken(userID, (errorCode0, token) -> {
+            ZegoRoomManager.getInstance().roomService.joinRoom(roomID, token, errorCode1 -> {
+                Log.d("Room", "joinRoom: " + errorCode1 + ",roomID:" + roomID);
+                if (errorCode1 == ZegoRoomErrorCode.SUCCESS) {
+                    userService.getOnlineRoomUsers("", (errorCode2, userList1, nextFlag) -> {
+                        updateUserList();
+                    });
+                }
+                if (callback != null) {
+                    callback.onRoomCallback(errorCode1);
                 }
             });
         });
@@ -298,33 +245,8 @@ public class LiveRoomViewModel extends ViewModel {
 
     public void leaveRoom(ZegoRoomCallback callback) {
         boolean selfHost = UserInfoHelper.isSelfHost();
-        String roomID = ZegoRoomManager.getInstance().roomService.roomInfo.getRoomID();
         ZegoRoomManager.getInstance().roomService.leaveRoom(callback);
         Log.d("leaveRoom", "leaveRoom() called with: selfHost = [" + selfHost + "]");
-        if (selfHost) {
-            ZegoRoomListService.endServerRoom(roomID, new IAsyncGetCallback<RoomBean>() {
-                @Override
-                public void onResponse(int errorCode, @NonNull String message,
-                                       RoomBean responseJsonBean) {
-
-                }
-            });
-        } else {
-            String userID = ZegoRoomManager.getInstance().userService.localUserInfo.getUserID();
-            ZegoRoomListService.leaveServerRoom(userID, roomID, new IAsyncGetCallback<RoomBean>() {
-                @Override
-                public void onResponse(int errorCode, @NonNull String message, RoomBean responseJsonBean) {
-
-                }
-            });
-        }
-        stopHeartBeat();
-    }
-
-    public void stopHeartBeat() {
-        if (timer != null) {
-            timer.cancel();
-        }
     }
 
     public void enableCamera(boolean enable) {

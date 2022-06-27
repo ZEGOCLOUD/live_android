@@ -63,13 +63,13 @@ public class RoomListAdapter extends RecyclerView.Adapter<RoomListAdapter.RoomLi
     public void onBindViewHolder(@NonNull RoomListViewHolder holder, int position) {
         RoomBean item = items.get(position);
 
-        int index = AvatarHelper.getIndex(item.getName());
-        Log.d(TAG, "onBindViewHolder: name=" + item.getName() + ", index=" + index);
+        int index = AvatarHelper.getIndex(item.getRoomID());
+        Log.d(TAG, "onBindViewHolder: name=" + item.getRoomID() + ", index=" + index);
         Bitmap bitmap = BitmapFactory.decodeResource(holder.itemView.getResources(), coverList[index]);
         Bitmap roundBitmap = ImageUtils.toRoundCorner(bitmap, SizeUtils.dp2px(13f));
         holder.cover.setImageBitmap(roundBitmap);
         holder.roomUserNum.setText(String.valueOf(item.getUserNum()));
-        holder.roomTitle.setText(item.getName());
+        holder.roomTitle.setText(item.getRoomID());
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
